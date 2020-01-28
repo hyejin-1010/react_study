@@ -22,7 +22,7 @@ class App extends Component {
      * ==> 화면이 다시 그려진다.
      */
     this.state = {
-      mode: 'create',
+      mode: 'welcome',
       selected_content_id: 2,
       subject: {
         title: 'WEB',
@@ -53,7 +53,7 @@ class App extends Component {
       _article = <ReadContent title={_title} desc={_desc}></ReadContent>;
     } else if (this.state.mode === 'read') {
       _content = this.getReadContent();
-      _article = <ReadContent title={_content._title} desc={_content._desc}></ReadContent>;
+      _article = <ReadContent title={_content.title} desc={_content.desc}></ReadContent>;
     } else if (this.state.mode === 'create') {
       _article = <CreateContent onSubmit={function(_title, _desc) {
         // add content to this.state.contents
@@ -115,7 +115,17 @@ class App extends Component {
         }.bind(this)}></TOC>
 
         <Control onChangeMode={function(mode) {
-            this.setState({mode});
+          if (mode === 'delete') {
+            if (window.confirm('really?')) {
+              const contents = Array.from(this.state.contents);
+              const index = contents.findIndex((content) => content.id === this.state.selected_content_id);
+              if (index > -1) {
+                contents.splice(index, 1);
+                this.setState({ mode: 'welcome', contents });
+              }
+            }
+          }
+          this.setState({mode});
         }.bind(this)}></Control>
 
         {this.getContent()}
