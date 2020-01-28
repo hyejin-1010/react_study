@@ -2,13 +2,17 @@ import React, { Component } from 'react';
 import './App.css';
 import TOC from './components/TOC';
 import Subject from './components/Subject';
-import Content from './components/Content';
+import ReadContent from './components/ReadContent';
+import Control from './components/Control';
+import CreateContent from './components/CreateContent';
 
 class App extends Component {
   constructor(props) {
     super(props);
 
     console.log('chloe test construcor');
+
+    this.max_content_id = 3;
 
     /**
      * react에서는 state의 값이 바뀌면, 
@@ -17,7 +21,7 @@ class App extends Component {
      * ==> 화면이 다시 그려진다.
      */
     this.state = {
-      mode: 'read',
+      mode: 'create',
       selected_content_id: 2,
       subject: {
         title: 'WEB',
@@ -42,18 +46,26 @@ class App extends Component {
    --> 가장 바깥 쪽에는 태그 하나가 있어야 한다. = 없으면 error가 남
   */
   render() {
-    var _title, _desc = null;
+    var _title, _desc, _article = null;
 
     if (this.state.mode === 'welcome') {
       _title = this.state.welcome.title;
       _desc = this.state.welcome.desc;
+      _article = <ReadContent title={_title} desc={_desc}></ReadContent>;
     } else if (this.state.mode === 'read') {
       var data = this.state.contents.find(content => content.id === this.state.selected_content_id);
-      console.log('chloe test data', data, this.state.selected_content_id); 
       if (data) {
         _title = data.title;
         _desc = data.desc;
       }
+      _article = <ReadContent title={_title} desc={_desc}></ReadContent>;
+    } else if (this.state.mode === 'create') {
+      _article = <CreateContent onSubmit={function(_title, _desc) {
+        // add content to this.state.contents
+        this.setState({
+          contents: this.state.contents.concat({ id: ++ this.max_content_id, title: _title, desc: _desc })
+        });
+      }.bind(this)}></CreateContent>
     }
 
     return (
@@ -84,7 +96,12 @@ class App extends Component {
             selected_content_id: Number(id)
           });
         }.bind(this)}></TOC>
-        <Content title={_title} desc={_desc}></Content>
+
+        <Control onChangeMode={function(mode) {
+            this.setState({mode});
+        }.bind(this)}></Control>
+
+        {_article}
       </div>
     );
   }
