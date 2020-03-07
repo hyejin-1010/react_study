@@ -1,0 +1,95 @@
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.min.js"></script>
+    </head>
+    <body>
+        <div id="subject"></div>
+        <div id="toc"></div>
+        <div id="control"></div>
+        <div id="content"></div>
+
+        <script>
+
+            function reducer(state, action) {
+                // 최초의 초기화 단계
+                if (state === undefined) {
+                    return { 
+                        selected_id: null,
+                        contents: [
+                            { id: 1, title: 'HTML', desc: 'HTML is ...' },
+                            { id: 2, title: 'CSS', desc: 'CSS is ...' }
+                        ]
+                    };
+                }
+                var newState = {};
+                if (action.type === 'SELECT') {
+                    Object.assign(newState, state, { selected_id: action.id });
+                }
+                return newState;
+            }
+            var store = Redux.createStore(
+                reducer,
+                window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+            );
+
+            function subject() {
+                document.querySelector('#subject').innerHTML = `
+                <header>
+                    <h1>WEB</h1>
+                    Hello, WEB!
+                </header>
+                `;
+            }
+            
+            function TOC() {
+                var state = store.getState();
+                var liTags = '';
+                state.contents.forEach((content) => {
+                    liTags += `
+                        <li>
+                            <a onclick="
+                                event.preventDefault();
+                                store.dispatch({ type: 'SELECT', id: ${content.id} });
+                            " href="${content.id}">
+                                ${content.title}
+                            </a>
+                        </li>
+                    `;
+                });
+
+                document.querySelector('#toc').innerHTML = `
+                <nav>
+                    <ol>${liTags}</ol>
+                </nav>
+                `;
+            }
+
+            function control() {
+                document.querySelector('#control').innerHTML = `
+                <ul>
+                    <li><a href="/create">create</a></li>
+                    <li><input type="button" value="delete" /></li>
+                </ul>
+                `;
+            }
+
+            function article() {
+                var state = store.getState();
+                const content = state.contents.find((c) => c.id === state.selected_id);
+                if (!content) { return; }
+
+                document.querySelector('#content').innerHTML = `
+                <article>
+                    <h2>${content.title}</h2>
+                    ${content.desc}
+                </article>
+                `;
+            }
+            subject();
+            TOC();
+            control();
+            article();
+            store.subscribe(article);
+        </script>
+    </body>
+</html>
