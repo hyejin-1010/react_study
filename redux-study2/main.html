@@ -15,7 +15,7 @@
                 if (state === undefined) {
                     return {
                         max_id: 2,
-                        mode: 'create',
+                        mode: 'welcome',
                         selected_id: null,
                         contents: [
                             { id: 1, title: 'HTML', desc: 'HTML is ...' },
@@ -25,12 +25,17 @@
                 }
                 var newState = {};
                 if (action.type === 'SELECT') {
-                    Object.assign(newState, state, { selected_id: action.id });
+                    Object.assign(newState, state, { selected_id: action.id, mode: 'read' });
                 } else if (action.type === 'CREATE') {
                     var newMaxId = state.max_id + 1;
                     var newContents = state.contents.concat();
                     newContents.push({ id: newMaxId, title: action.title, desc: action.desc });
                     Object.assign(newState, state, { max_id: newMaxId, contents: newContents, mode: 'read' });
+                } else if (action.type === 'DELETE') {
+                    var newContents = state.contents.filter((content) => content.id !== state.selected_id);
+                    Object.assign(newState, state, { contents: newContents, mode: 'welcome', selected_id: null });
+                } else if (action.type === 'CHANGE_MODE') {
+                    Object.assign(newState, state, { mode: action.mode });
                 }
                 return newState;
             }
@@ -76,9 +81,14 @@
                 <ul>
                     <li><a onclick="
                         event.preventDefault();
-                        
+                        store.dispatch({
+                            type: 'CHANGE_MODE',
+                            mode: 'create'
+                        });
                     " href="/create">create</a></li>
-                    <li><input type="button" value="delete" /></li>
+                    <li><input type="button" value="delete" onclick="
+                        store.dispatch({ type: 'DELETE' });
+                    " /></li>
                 </ul>
                 `;
             }
@@ -112,12 +122,21 @@
                     `;
                 } else if (state.mode === 'read') {
                     const content = state.contents.find((c) => c.id === state.selected_id);
-                    if (!content) { return; }
+                    if (content) {
+                        var { title, desc } = content;
+                    }
 
                     document.querySelector('#content').innerHTML = `
                     <article>
-                        <h2>${content.title}</h2>
-                        ${content.desc}
+                        <h2>${title || ''}</h2>
+                        ${desc || ''}
+                    </article>
+                    `;
+                } else if (state.mode === 'welcome') {
+                    document.querySelector('#content').innerHTML = `
+                    <article>
+                        <h2>Welcome</h2>
+                        Hello, Redux!!
                     </article>
                     `;
                 }
