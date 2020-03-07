@@ -35,7 +35,16 @@
                     var newContents = state.contents.filter((content) => content.id !== state.selected_id);
                     Object.assign(newState, state, { contents: newContents, mode: 'welcome', selected_id: null });
                 } else if (action.type === 'CHANGE_MODE') {
-                    Object.assign(newState, state, { mode: action.mode });
+                    let data = {};
+                    if (action.mode !== 'update' || state.selected_id !== null) { data = { mode: action.mode }; }
+                    Object.assign(newState, state, data);
+                } else if (action.type === 'UPDATE') {
+                    var newContents = state.contents.concat();
+                    const index = newContents.findIndex((content) => content.id === state.selected_id);
+                    if (index > -1) {
+                        newContents[index] = { id: action.id, title: action.title, desc: action.desc };
+                    }
+                    Object.assign(newState, state, { contents: newContents, mode: 'read' });
                 }
                 return newState;
             }
@@ -86,6 +95,13 @@
                             mode: 'create'
                         });
                     " href="/create">create</a></li>
+                    <li><a onclick="
+                        event.preventDefault();
+                        store.dispatch({
+                            type: 'CHANGE_MODE',
+                            mode: 'update'
+                        })
+                    " href="/update">update</a></li>
                     <li><input type="button" value="delete" onclick="
                         store.dispatch({ type: 'DELETE' });
                     " /></li>
@@ -95,7 +111,12 @@
 
             function article() {
                 var state = store.getState();
-                if (state.mode === 'create') {
+                if (state.mode === 'create' || state.mode === 'update') {
+                    if (state.mode === 'update') {
+                        const content = state.contents.find((c) => c.id === state.selected_id);
+                        if (content) { var { title, desc } = content; }
+                    }
+
                     document.querySelector('#content').innerHTML = `
                     <article>
                         <form onsubmit="
@@ -103,16 +124,16 @@
                             var title = this.title.value;
                             var desc = this.desc.value;
                             store.dispatch({
-                                type: 'CREATE',
+                                type: '${state.mode.toUpperCase()}',
                                 title,
                                 desc
                             });
                         ">
                             <p>
-                                <input type="text" name="title" placeholder="title" />
+                                <input type="text" name="title" placeholder="title" value="${title || ''}" />
                             </p>
                             <p>
-                                <textarea name="desc" placeholder="description"></textarea>
+                                <textarea name="desc" placeholder="description">${desc || ''}</textarea>
                             </p>
                             <p>
                                 <input type="submit" />
@@ -120,23 +141,16 @@
                         </form>
                     </article>
                     `;
-                } else if (state.mode === 'read') {
-                    const content = state.contents.find((c) => c.id === state.selected_id);
-                    if (content) {
-                        var { title, desc } = content;
+                } else if (state.mode === 'read' || state.mode === 'welcome') {
+                    if (state.selected_id !== null) {
+                        const content = state.contents.find((c) => c.id === state.selected_id);
+                        if (content) { var { title, desc } = content; }
                     }
 
                     document.querySelector('#content').innerHTML = `
                     <article>
-                        <h2>${title || ''}</h2>
-                        ${desc || ''}
-                    </article>
-                    `;
-                } else if (state.mode === 'welcome') {
-                    document.querySelector('#content').innerHTML = `
-                    <article>
-                        <h2>Welcome</h2>
-                        Hello, Redux!!
+                        <h2>${title || 'Welcome'}</h2>
+                        ${desc || 'Hello, Redux!!'}
                     </article>
                     `;
                 }
